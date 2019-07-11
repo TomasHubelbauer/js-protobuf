@@ -1,62 +1,63 @@
 window.addEventListener('load', async () => {
-  const previewLength = 25;
-  function render(/** @type {[]} */ types, target = document.body) {
-    for (let type of types) {
-      const typeDiv = document.createElement('div');
-      switch (type.wireType) {
-        case 'varint': {
-          typeDiv.textContent = `Varint (field number ${type.fieldNumber}) @${type.index}: ${type.valueRaw}`;
-          break;
-        }
+  const response = await fetch('Prag.osm.pbf');
+  const arrayBuffer = await response.arrayBuffer();
+  const dataView = new DataView(arrayBuffer);
+  render([...parse(dataView)], document.body);
+});
 
-        case '64-bit': {
-          throw new Error('64-bit is not implemented yet');
-        }
+const previewLength = 25;
 
-        case 'length-delimited': {
-          typeDiv.textContent = `Length delimited (field number ${type.fieldNumber}) @${type.index} (length ${type.length}): `;
+function render(/** @type {[]} */ types, /** @type {HTMLElement} */ target) {
+  for (let type of types) {
+    const typeDiv = document.createElement('div');
+    switch (type.wireType) {
+      case 'varint': {
+        typeDiv.textContent = `Varint (field number ${type.fieldNumber}) @${type.index}: ${type.valueRaw}`;
+        break;
+      }
+
+      case '64-bit': {
+        throw new Error('64-bit is not implemented yet');
+      }
+
+      case 'length-delimited': {
+        typeDiv.textContent = `Length delimited (field number ${type.fieldNumber}) @${type.index} (length ${type.length}): `;
+        if (type.text) {
           const previewCode = document.createElement('code');
           previewCode.textContent = type.text.length <= previewLength ? type.text : type.text.substring(0, previewLength);
           typeDiv.append(previewCode);
           if (type.text.length > previewLength) {
             typeDiv.append(document.createTextNode(`… (+${type.text.length - previewLength})`));
           }
-
-          if (type.embedded) {
-            render(type.embedded, typeDiv);
-          }
-
-          break;
         }
 
-        case 'start-group': {
-          throw new Error('Start group is not implemented yet');
+        if (type.embedded) {
+          render(type.embedded, typeDiv);
         }
 
-        case 'end-group': {
-          throw new Error('End group is not implemented yet');
-        }
-
-        case '32-bit': {
-          throw new Error('32-bit is not implemented yet');
-        }
-
-        default: {
-          throw new Error('Unexpected wire type!');
-        }
+        break;
       }
 
-      target.append(typeDiv);
+      case 'start-group': {
+        throw new Error('Start group is not implemented yet');
+      }
+
+      case 'end-group': {
+        throw new Error('End group is not implemented yet');
+      }
+
+      case '32-bit': {
+        throw new Error('32-bit is not implemented yet');
+      }
+
+      default: {
+        throw new Error('Unexpected wire type!');
+      }
     }
+
+    target.append(typeDiv);
   }
-
-  const response = await fetch('Prag.osm.pbf');
-  const arrayBuffer = await response.arrayBuffer();
-  const dataView = new DataView(arrayBuffer);
-
-  document.body.innerHTML = '';
-  render([...parse(dataView)]);
-});
+}
 
 function* parse(/** @type {DataView} */ dataView) {
   let index = 0;
@@ -102,10 +103,12 @@ function* parse(/** @type {DataView} */ dataView) {
           // https://stackoverflow.com/a/17192845/2715716
           text = decodeURIComponent(escape(String.fromCharCode(...payload)));
         } catch (error) {
-          text = String.fromCharCode(...payload);
+          try {
+            text = String.fromCharCode(...payload);
+          } catch (error) {
+            // Maximum callstack size exceeded? Too long payload for `String.fromCharCode`?
+          }
         }
-
-
 
         // Test if this is an embedded message
         try {
