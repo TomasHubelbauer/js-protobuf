@@ -1,8 +1,41 @@
-window.addEventListener('load', async () => {
-  const response = await fetch('Prag.osm.pbf');
-  const arrayBuffer = await response.arrayBuffer();
-  const dataView = new DataView(arrayBuffer);
-  render([...parse(dataView)], document.body);
+window.addEventListener('load', () => {
+  const downloadButton = document.getElementById('downloadButton');
+  downloadButton.addEventListener('click', async () => {
+    const response = await fetch('Prag.osm.pbf');
+
+    const total = Number(response.headers.get('content-length'));
+    const buffer = new Uint8Array(total);
+
+    const downloadProgress = document.createElement('progress');
+    downloadProgress.max = total;
+    document.body.append(document.createTextNode('Downloading…'));
+    document.body.append(downloadProgress);
+    downloadButton.remove();
+
+    let loaded = 0;
+
+    const reader = response.body.getReader();
+    let result;
+    while (!(result = await reader.read()).done) {
+      buffer.set(result.value, loaded);
+      loaded += result.value.length;
+      downloadProgress.value = loaded;
+    }
+
+    document.body.append(document.createTextNode('Parsing…'));
+    downloadProgress.remove();
+
+    const dataView = new DataView(buffer.buffer);
+
+    // Give the UI a chance to render before the heavy-lifting parsing routine
+    await new Promise(resolve => window.setTimeout(resolve, 100));
+
+    const timestamp = performance.now();
+    const types = [...parse(dataView)];
+    document.body.append(document.createTextNode(`Parsed in ${((performance.now() - timestamp) / 1000).toFixed(2)} s.`));
+
+    render(types, document.body);
+  });
 });
 
 const previewLength = 25;
