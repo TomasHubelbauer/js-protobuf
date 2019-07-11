@@ -12,6 +12,4 @@ This library is tested on Qwant vector tiles which are based on OSM data.
 
 ---
 
-- Test string messages for being embedded protobuf so that the first string (320 bytes)
-  and the fourth string (6 bytes, `beer`) work as expected
 - Publish to GitHub Pages and add a GitHub Pages demo bookmark to the README
