@@ -21,3 +21,6 @@ file which doesn't work off the `file://` protocol in Chrome (does in Firefox).
 
 - Recognize strings whose embedded content is just the same string
   (length diff = length varint byte length) and discard embedded content then
+- Extend the library to cover both scenarios without and with a schema and parse
+  https://github.com/substack/osm-pbf-parser/blob/master/lib/osmformat.proto
+  to parse the Prague extract into structures
