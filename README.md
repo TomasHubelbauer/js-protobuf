@@ -14,6 +14,9 @@ It is validated against https://protogen.marcgravell.com/decode
 The ProtoBuf wire format is documented at:
 https://developers.google.com/protocol-buffers/docs/encoding
 
+To run it locally, run it using `npx serve .` as it uses `fetch` to get the PBF
+file which doesn't work off the `file://` protocol in Chrome (does in Firefox).
+
 ---
 
 - Recognize strings whose embedded content is just the same string
