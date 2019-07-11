@@ -12,8 +12,6 @@ This library is tested on Qwant vector tiles which are based on OSM data.
 
 ---
 
-- Add support for embedded messages so that the first string (320 bytes) and the
-  fourth string (6 bytes, `beer`) work as expected
-- Debug the .NET library to see how it recognizes the first string is an embedded
-  message and knows to construct the hierarchy
+- Test string messages for being embedded protobuf so that the first string (320 bytes)
+  and the fourth string (6 bytes, `beer`) work as expected
 - Publish to GitHub Pages and add a GitHub Pages demo bookmark to the README
