@@ -11,3 +11,8 @@ This library is tested on Qwant vector tiles which are based on OSM data.
 - .NET ProtoBuf decoder: https://protogen.marcgravell.com/decode
 - Online hex editor: https://www.onlinehexeditor.com
 - ProtoBuf wire format: https://developers.google.com/protocol-buffers/docs/encoding
+
+---
+
+- Recognize strings whose embedded content is just the same string
+  (length diff = length varint byte length) and discard embedded content then
