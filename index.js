@@ -1,96 +1,6 @@
 window.addEventListener('load', async () => {
-  const zoom = 18;
-
-  function* parse(/** @type {DataView} */ dataView) {
-    let index = 0;
-    while (index < dataView.byteLength) {
-      const byte = dataView.getUint8(index);
-      //console.log(`${index}/${dataView.byteLength} (${dataView.byteOffset + index}/${dataView.buffer.byteLength}): DEC ${byte} HEX ${byte.toString(16)} BIN ${byte.toString(2)}`);
-      index++;
-
-      const fieldNumber = ((byte & 128) / 8) + ((byte & 64) / 8) + ((byte & 32) / 8) + ((byte & 16) / 8) + ((byte & 8) / 8);
-      const wireType = (byte & 4) + (byte & 2) + (byte & 1);
-      switch (wireType) {
-        // Varint
-        case 0: {
-          const varint = dataView.getVarint(index);
-          yield { wireType: 'varint', fieldNumber, index, valueRaw: varint.value, valueZigZag: 'todo' };
-          index += varint.byteLength;
-          break;
-        }
-
-        // 64-bit
-        case 1: {
-          yield { wireType: '64-bit', fieldNumber, index };
-          throw new Error('64-bit is not implemented yet');
-        }
-
-        // Length-delimited
-        case 2: {
-          const lengthVarint = dataView.getVarint(index);
-          if (lengthVarint.value > dataView.byteLength - index) {
-            // This most commonly happens when a payload of a length-delimited field is tested to see if valid Protobuf
-            // but the test returns a false positive (valid bytes but invalid semantically - like this overflow)
-            throw new Error('Appears to be a mis-identified embedded message.');
-          }
-
-          const arrayBuffer = dataView.buffer;
-          const byteOffset = dataView.byteOffset + index + lengthVarint.byteLength;
-          const byteLength = lengthVarint.value;
-
-          const payload = new Uint8Array(arrayBuffer, byteOffset, byteLength);
-          let text;
-
-          try {
-            // https://stackoverflow.com/a/17192845/2715716
-            text = decodeURIComponent(escape(String.fromCharCode(...payload)));
-          } catch (error) {
-            text = String.fromCharCode(...payload);
-          }
-
-
-
-          // Test if this is an embedded message
-          try {
-            const dataView = new DataView(arrayBuffer, byteOffset, byteLength);
-            const embedded = [...parse(dataView)];
-            yield { wireType: 'length-delimited', fieldNumber, index, length: lengthVarint.value, payload, text, embedded };
-          } catch (error) {
-            // No valid Protobuf was found in the length-delimited payload so this is probably not an embedded message
-            yield { wireType: 'length-delimited', fieldNumber, index, length: lengthVarint.value, payload, text };
-          }
-
-          index += lengthVarint.byteLength + lengthVarint.value;
-          break;
-        }
-
-        // Start group
-        case 3: {
-          yield { wireType: 'start-group', fieldNumber, index };
-          throw new Error('Start group is not implemented yet');
-        }
-
-        // End group
-        case 4: {
-          yield { wireType: 'end-group', fieldNumber, index };
-          throw new Error('End group is not implemented yet');
-        }
-
-        // 32-bit
-        case 5: {
-          yield { wireType: '32-bit', fieldNumber, index };
-          throw new Error('32-bit is not implemented yet');
-        }
-
-        default: {
-          throw new Error(`Unknown wire type ${wireType} at index ${index} (${dataView.byteOffset + index}).`);
-        }
-      }
-    }
-  }
-
   const previewLength = 25;
-  function renderTypes(/** @type {[]} */ types, target = document.body) {
+  function render(/** @type {[]} */ types, target = document.body) {
     for (let type of types) {
       const typeDiv = document.createElement('div');
       switch (type.wireType) {
@@ -113,7 +23,7 @@ window.addEventListener('load', async () => {
           }
 
           if (type.embedded) {
-            renderTypes(type.embedded, typeDiv);
+            render(type.embedded, typeDiv);
           }
 
           break;
@@ -140,35 +50,101 @@ window.addEventListener('load', async () => {
     }
   }
 
-  async function render(longitude, latitude) {
-    const x = Math.floor((longitude + 180) / 360 * Math.pow(2, zoom));
-    const y = Math.floor((1 - Math.log(Math.tan(latitude * Math.PI / 180) + 1 / Math.cos(latitude * Math.PI / 180)) / Math.PI) / 2 * Math.pow(2, zoom));
+  const response = await fetch('Prag.osm.pbf');
+  const arrayBuffer = await response.arrayBuffer();
+  const dataView = new DataView(arrayBuffer);
 
-    const url = `https://www.qwant.com/maps/tiles/ozpoi/${zoom}/${x}/${y}.pbf`;
-    console.log(url);
-
-    const response = await fetch(url);
-    const arrayBuffer = await response.arrayBuffer();
-    const dataView = new DataView(arrayBuffer);
-
-    document.body.innerHTML = '';
-    renderTypes([...parse(dataView)]);
-  }
-
-  if (localStorage.longitude && localStorage.latitude) {
-    await render(Number(localStorage.longitude), Number(localStorage.latitude));
-  } else {
-    navigator.geolocation.getCurrentPosition(
-      async position => {
-        localStorage.longitude = position.coords.longitude;
-        localStorage.latitude = position.coords.latitude;
-        await render(position.coords.longitude, position.coords.latitude);
-      },
-      error => console.log(error),
-      { enableHighAccuracy: true }
-    );
-  }
+  document.body.innerHTML = '';
+  render([...parse(dataView)]);
 });
+
+function* parse(/** @type {DataView} */ dataView) {
+  let index = 0;
+  while (index < dataView.byteLength) {
+    const byte = dataView.getUint8(index);
+    //console.log(`${index}/${dataView.byteLength} (${dataView.byteOffset + index}/${dataView.buffer.byteLength}): DEC ${byte} HEX ${byte.toString(16)} BIN ${byte.toString(2)}`);
+    index++;
+
+    const fieldNumber = ((byte & 128) / 8) + ((byte & 64) / 8) + ((byte & 32) / 8) + ((byte & 16) / 8) + ((byte & 8) / 8);
+    const wireType = (byte & 4) + (byte & 2) + (byte & 1);
+    switch (wireType) {
+      // Varint
+      case 0: {
+        const varint = dataView.getVarint(index);
+        yield { wireType: 'varint', fieldNumber, index, valueRaw: varint.value, valueZigZag: 'todo' };
+        index += varint.byteLength;
+        break;
+      }
+
+      // 64-bit
+      case 1: {
+        yield { wireType: '64-bit', fieldNumber, index };
+        throw new Error('64-bit is not implemented yet');
+      }
+
+      // Length-delimited
+      case 2: {
+        const lengthVarint = dataView.getVarint(index);
+        if (lengthVarint.value > dataView.byteLength - index) {
+          // This most commonly happens when a payload of a length-delimited field is tested to see if valid Protobuf
+          // but the test returns a false positive (valid bytes but invalid semantically - like this overflow)
+          throw new Error('Appears to be a mis-identified embedded message.');
+        }
+
+        const arrayBuffer = dataView.buffer;
+        const byteOffset = dataView.byteOffset + index + lengthVarint.byteLength;
+        const byteLength = lengthVarint.value;
+
+        const payload = new Uint8Array(arrayBuffer, byteOffset, byteLength);
+        let text;
+
+        try {
+          // https://stackoverflow.com/a/17192845/2715716
+          text = decodeURIComponent(escape(String.fromCharCode(...payload)));
+        } catch (error) {
+          text = String.fromCharCode(...payload);
+        }
+
+
+
+        // Test if this is an embedded message
+        try {
+          const dataView = new DataView(arrayBuffer, byteOffset, byteLength);
+          const embedded = [...parse(dataView)];
+          yield { wireType: 'length-delimited', fieldNumber, index, length: lengthVarint.value, payload, text, embedded };
+        } catch (error) {
+          // No valid Protobuf was found in the length-delimited payload so this is probably not an embedded message
+          yield { wireType: 'length-delimited', fieldNumber, index, length: lengthVarint.value, payload, text };
+        }
+
+        index += lengthVarint.byteLength + lengthVarint.value;
+        break;
+      }
+
+      // Start group
+      case 3: {
+        yield { wireType: 'start-group', fieldNumber, index };
+        throw new Error('Start group is not implemented yet');
+      }
+
+      // End group
+      case 4: {
+        yield { wireType: 'end-group', fieldNumber, index };
+        throw new Error('End group is not implemented yet');
+      }
+
+      // 32-bit
+      case 5: {
+        yield { wireType: '32-bit', fieldNumber, index };
+        throw new Error('32-bit is not implemented yet');
+      }
+
+      default: {
+        throw new Error(`Unknown wire type ${wireType} at index ${index} (${dataView.byteOffset + index}).`);
+      }
+    }
+  }
+}
 
 // TODO: Figure out if Protobuf varints have a maximum amount of bytes with last byte being all 8 bits like SQLite
 // https://developers.google.com/protocol-buffers/docs/encoding#varints

@@ -2,15 +2,17 @@
 
 [**DEMO**](https://tomashubelbauer.github.io/js-protobuf)
 
-A JavaScript library for decoding the ProtocolBuffers wire format (without a
-schema). **This is work in progress.**
+A JavaScript library for decoding the ProtocolBuffers wire format
+(without a schema).
+**This is work in progress.**
 
-This library is tested on Qwant vector tiles which are based on OSM data.
+This library is tested on a Prague OSM extract file by BBBike.org:
+https://download.bbbike.org/osm/bbbike/Prag/
 
-- Qwant Maps (beta): https://www.qwant.com/maps
-- .NET ProtoBuf decoder: https://protogen.marcgravell.com/decode
-- Online hex editor: https://www.onlinehexeditor.com
-- ProtoBuf wire format: https://developers.google.com/protocol-buffers/docs/encoding
+It is validated against https://protogen.marcgravell.com/decode
+
+The ProtoBuf wire format is documented at:
+https://developers.google.com/protocol-buffers/docs/encoding
 
 ---
 
