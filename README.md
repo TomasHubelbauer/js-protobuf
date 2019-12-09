@@ -17,12 +17,14 @@ https://developers.google.com/protocol-buffers/docs/encoding
 To run it locally, run it using `npx serve .` as it uses `fetch` to get the PBF
 file which doesn't work off the `file://` protocol in Chrome (does in Firefox).
 
-# To-Do
+## To-Do
 
-Recognize strings whose embedded content is just the same string
-(length diff = length varint byte length)
-and collapse the embedded content into one entry (not one parent one child).
+### Recognize strings whose embedded content is just the same string
 
-Extend the library to cover both scenarios without and with a schema and parse
-https://github.com/substack/osm-pbf-parser/blob/master/lib/osmformat.proto
+(length diff = length varint byte length) and collapse the embedded content into
+one entry (not one parent one child).
+
+### Extend the library to cover both scenarios without and with a schema
+
+Parse https://github.com/substack/osm-pbf-parser/blob/master/lib/osmformat.proto
 to find structures and then parse the Prague extract into those structures.
