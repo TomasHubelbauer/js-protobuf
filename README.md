@@ -28,3 +28,7 @@ one entry (not one parent one child).
 
 Parse https://github.com/substack/osm-pbf-parser/blob/master/lib/osmformat.proto
 to find structures and then parse the Prague extract into those structures.
+
+### Compare my implementation with NNN.js
+
+https://github.com/photopea/UNN.js/blob/master/UNN.util.js#L135
