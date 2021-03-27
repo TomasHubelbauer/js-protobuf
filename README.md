@@ -32,3 +32,7 @@ to find structures and then parse the Prague extract into those structures.
 ### Compare my implementation with NNN.js
 
 https://github.com/photopea/UNN.js/blob/master/UNN.util.js#L135
+
+### Use `getVarint` from my ESM varint library
+
+https://github.com/TomasHubelbauer/esm-dataview-getvarint
